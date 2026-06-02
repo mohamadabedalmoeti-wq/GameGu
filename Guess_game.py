@@ -2,25 +2,25 @@ import time
 import random
 import streamlit as st
 
-# Setup dynamic responsive layout framework
-st.set_page_config(page_title="Reflex Reaction Game", page_icon="⚡", layout="centered")
+# Setup dynamic page framework
+st.set_page_config(page_title="Reflex Catching Arena", page_icon="⚡", layout="centered")
 
-# FIX: Safely initialize ALL session state parameters at the very beginning
+# Initialize global tracking variables safely
 if "score" not in st.session_state:
     st.session_state.score = 0
 if "high_score" not in st.session_state:
     st.session_state.high_score = 0
 if "speed" not in st.session_state:
-    st.session_state.speed = 1.0  # Falling velocity step multiplier
+    st.session_state.speed = 1.0
 if "obj_y" not in st.session_state:
-    st.session_state.obj_y = 0     # Falling item vertical position track
+    st.session_state.obj_y = 0
 if "obj_x" not in st.session_state:
-    st.session_state.obj_x = random.randint(1, 10) # Horizontal lane position
+    st.session_state.obj_x = random.randint(1, 10)
 if "game_over" not in st.session_state:
     st.session_state.game_over = False
 
 def restart_arena():
-    """Resets core tracking coordinates to spin a fresh game iteration."""
+    """Wipes coordinate tracking to spin a fresh game iteration."""
     if st.session_state.score > st.session_state.high_score:
         st.session_state.high_score = st.session_state.score
     st.session_state.score = 0
@@ -29,11 +29,11 @@ def restart_arena():
     st.session_state.obj_x = random.randint(1, 10)
     st.session_state.game_over = False
 
-# Screen Graphic Header Layout
+# Layout Header Layout
 st.title("⚡ Reflex Catching Arena")
 st.write("Slide your shield left and right to intercept the falling glitch object!")
 
-# Live Dashboard Monitors
+# Live Dashboard Layout Monitors
 m1, m2, m3 = st.columns(3)
 with m1:
     st.metric("Live Score", st.session_state.score)
@@ -43,9 +43,6 @@ with m3:
     st.metric("Velocity Multiplier", f"{st.session_state.speed:.1f}x")
 
 st.write("---")
-
-# Render The Visual Matrix grid viewport
-grid_placeholder = st.empty()
 
 # Interactive Mouse Interface Slider Control
 player_x = st.slider(
@@ -57,50 +54,55 @@ player_x = st.slider(
     disabled=st.session_state.game_over
 )
 
-# Active Falling Motion Loop Mechanics
-if not st.session_state.game_over:
-    # Increment downward movement
+# FIX: Isolate the visualization inside a self-contained automatic fragment engine loop
+@st.fragment(run_every=0.1)
+def run_game_engine(shield_pos):
+    """Executes background layout processing without getting frozen by slider changes."""
+    if st.session_state.game_over:
+        return
+
+    # Advance falling motion downwards
     st.session_state.obj_y += 1
     
-    # Render the text matrix map frame inside placeholder channel
+    # Construct the graphic text frame layout view matrix
     matrix_output = ""
     for row in range(8):
         row_str = ""
         for col in range(1, 11):
             if row == st.session_state.obj_y and col == st.session_state.obj_x:
-                row_str += "👾 "  # Falling Danger Item
-            elif row == 7 and col == player_x:
-                row_str += "🛡️ "  # Interactive Player Shield
+                row_str += "👾 "  # Falling Glitch Target
+            elif row == 7 and col == shield_pos:
+                row_str += "🛡️ "  # Live User Shield Position
             elif row == 7:
-                row_str += "═ "   # Surface baseline limit indicator
+                row_str += "═ "   # Surface platform bound line
             else:
-                row_str += "░ "   # Deep Space Void tiles
+                row_str += "░ "   # Void empty screen panels
         matrix_output += row_str + "\n"
-        
-    grid_placeholder.code(matrix_output, language="text")
 
-    # Evaluation conditions at Ground Level (Row 7)
-    if st.session_state.obj_y == 7:
-        if st.session_state.obj_x == player_x:
-            # Catch event resolution pathway
+    # Print the calculated matrix directly on screen inside a clean code box container
+    st.code(matrix_output, language="text")
+
+    # Game logic validation checks at the bottom drop point (Row 7)
+    if st.session_state.obj_y >= 7:
+        if st.session_state.obj_x == shield_pos:
+            # Catch Success Route
             st.session_state.score += 1
-            st.session_state.speed += 0.3  # Escalate falling velocity difficulty
-            st.session_state.obj_y = 0     # Spawn new object back at top
+            st.session_state.speed += 0.2
+            st.session_state.obj_y = 0
             st.session_state.obj_x = random.randint(1, 10)
-            st.toast("⚡ Clean Intercept!", icon="🎯")
+            st.toast("🎯 Intercept Clean!", icon="⚡")
+            st.rerun()
         else:
-            # Miss event resolution pathway
+            # Failure Collision Route
             st.session_state.game_over = True
             st.toast("💥 Perimeter Breached!", icon="❌")
-        st.rerun()
-    else:
-        # Pause execution to simulate visual game loop frames dynamically
-        sleep_duration = max(0.05, 0.4 / st.session_state.speed)
-        time.sleep(sleep_duration)
-        st.rerun()
+            st.rerun()
 
+# Run our active graphics container framework instantly
+if not st.session_state.game_over:
+    run_game_engine(player_x)
 else:
-    # Resolution Overlay Screen Display UI Block
+    # Game Over Layout Overlay Banner Block
     st.error(f"💀 System Compromised! The glitch slipped through. Final Score: {st.session_state.score}")
     if st.button("🔄 Initialize Counter-Measures (Restart)", use_container_width=True):
         restart_arena()
