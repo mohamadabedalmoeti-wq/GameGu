@@ -15,12 +15,12 @@ st.markdown("""
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
         }
         
-        /* FIX: Style the locked text matrix frame to be wide, unclipped, and centered */
+        /* Clean matrix display card container styled to prevent wrapped line breaks */
         .game-matrix-container {
             font-family: "Courier New", Courier, monospace !important;
-            font-size: 1.55rem !important;
-            line-height: 1.35 !important;
-            letter-spacing: 5px !important;
+            font-size: 1.6rem !important;
+            line-height: 1.4 !important;
+            letter-spacing: 4px !important;
             color: #102a43 !important;
             background-color: #f0f4f8 !important;
             border: 1px solid #bcccdc !important;
@@ -199,12 +199,13 @@ def run_game_engine():
             elif row == 9 and col == current_shield:
                 row_str += "🛡️"  
             elif row == 9:
-                row_str += "═"   
+                # FIX: Replaced the '═' symbol with a gray square block emoji to perfectly match widths
+                row_str += "⬛"   
             else:
                 row_str += "⚪"  
         matrix_output += row_str + "\n"
 
-    # FIX: Output grid inside an explicit HTML div structure to override default st.code clipping rules
+    # Output grid inside an explicit HTML div structure
     st.markdown(f'<div class="game-matrix-container">{matrix_output}</div>', unsafe_allow_html=True)
 
     # Target collision check paths at bottom floor level
