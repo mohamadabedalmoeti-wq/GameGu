@@ -6,6 +6,7 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="Cyber Catching Arena", page_icon="⚡", layout="centered")
 
 # --- INJECT CYBERPUNK ARCADE SKIN THEME CSS ---
+# FIX: Swapped out the old deleted parameter for 'unsafe_allow_html=True'
 st.markdown("""
     <style>
         /* General Canvas Layout styling */
@@ -42,7 +43,7 @@ st.markdown("""
             text-align: center;
         }
     </style>
-""", unsafe_with_html_context=True)
+""", unsafe_allow_html=True)
 
 # Initialize persistent tracking variables safely
 if "score" not in st.session_state:
@@ -79,7 +80,7 @@ def trigger_restart():
 
 # Layout Header Graphic Block
 st.title("⚡ CYBER CATCHING ARENA")
-st.write("<div style='text-align: center; color: #8b9bb4;'>Control with your <b>⬅️ Left Arrow</b> and <b>➡️ Right Arrow</b> keyboard keys!</div>", unsafe_with_html_context=True)
+st.write("<div style='text-align: center; color: #8b9bb4;'>Control with your <b>⬅️ Left Arrow</b> and <b>➡️ Right Arrow</b> keyboard keys!</div>", unsafe_allow_html=True)
 st.write("---")
 
 # --- MASTER CONTROL HUB (Top Navigation Console) ---
