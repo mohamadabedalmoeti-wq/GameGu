@@ -15,22 +15,24 @@ st.markdown("""
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
         }
         
-        /* FIX: Clean matrix display card container with fixed line-height to prevent chopped emojis */
-        code {
+        /* FIX: Style the locked text matrix frame to be wide, unclipped, and centered */
+        .game-matrix-container {
+            font-family: "Courier New", Courier, monospace !important;
+            font-size: 1.55rem !important;
+            line-height: 1.35 !important;
+            letter-spacing: 5px !important;
             color: #102a43 !important;
             background-color: #f0f4f8 !important;
             border: 1px solid #bcccdc !important;
             border-radius: 16px !important;
-            font-size: 1.6rem !important;
-            line-height: 1.1 !important; /* FIX: Keeps rows perfectly tall and integrated */
-            font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", monospace !important; /* FIX: Force crisp rendering */
-            letter-spacing: 4px;
-            display: block;
             padding: 20px !important;
             box-shadow: inset 3px 3px 6px #d9e2ec, inset -3px -3px 6px #ffffff,
                         4px 4px 12px rgba(0, 0, 0, 0.05);
             text-align: center;
             white-space: pre !important;
+            overflow-x: auto !important;
+            width: 100% !important;
+            margin: 0 auto !important;
         }
         
         /* 3D Skeuomorphic Button Styling */
@@ -202,7 +204,8 @@ def run_game_engine():
                 row_str += "⚪"  
         matrix_output += row_str + "\n"
 
-    st.code(matrix_output, language="text")
+    # FIX: Output grid inside an explicit HTML div structure to override default st.code clipping rules
+    st.markdown(f'<div class="game-matrix-container">{matrix_output}</div>', unsafe_allow_html=True)
 
     # Target collision check paths at bottom floor level
     if st.session_state.obj_y >= 9:
