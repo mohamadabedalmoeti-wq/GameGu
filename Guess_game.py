@@ -43,11 +43,11 @@ speed_choice = st.radio(
 )
 
 if "Slow" in speed_choice:
-    loop_delay = 0.5
+    loop_delay = 0.15
 elif "Normal" in speed_choice:
-    loop_delay = 0.3
+    loop_delay = 0.13
 else:
-    loop_delay = 0.1
+    loop_delay = 0.11
 
 # Live Dashboard Layout Monitors
 m1, m2 = st.columns(2)
