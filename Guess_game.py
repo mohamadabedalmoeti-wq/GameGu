@@ -15,20 +15,22 @@ st.markdown("""
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
         }
         
-        /* Clean matrix display card container with soft 3D shadow */
+        /* FIX: Clean matrix display card container with fixed line-height to prevent chopped emojis */
         code {
             color: #102a43 !important;
             background-color: #f0f4f8 !important;
             border: 1px solid #bcccdc !important;
             border-radius: 16px !important;
-            font-size: 1.5rem !important;
-            line-height: 1.4 !important;
-            letter-spacing: 2px;
+            font-size: 1.6rem !important;
+            line-height: 1.1 !important; /* FIX: Keeps rows perfectly tall and integrated */
+            font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", monospace !important; /* FIX: Force crisp rendering */
+            letter-spacing: 4px;
             display: block;
             padding: 20px !important;
             box-shadow: inset 3px 3px 6px #d9e2ec, inset -3px -3px 6px #ffffff,
                         4px 4px 12px rgba(0, 0, 0, 0.05);
             text-align: center;
+            white-space: pre !important;
         }
         
         /* 3D Skeuomorphic Button Styling */
@@ -97,7 +99,7 @@ st.write("---")
 st.session_state.loop_delay = st.slider(
     "⚙️ Adjust Game Loop Speed (Refresh Interval):",
     min_value=0.05, max_value=1.00, value=st.session_state.loop_delay, step=0.05,
-    disabled=(st.session_state.game_state == "RUNNING") # Speed can only be changed before starting or while paused
+    disabled=(st.session_state.game_state == "RUNNING")
 )
 
 # Score Monitors Dashboard Panel
@@ -140,7 +142,6 @@ js_keyboard_listener = """
 components.html(js_keyboard_listener, height=0, width=0)
 
 # --- ISOLATED CORE ENGINE CONTAINER ---
-# FIX: Wrapping everything inside the same refresh fragment stops button lag
 @st.fragment(run_every=st.session_state.loop_delay)
 def run_game_engine():
     # --- MASTER CONTROL HUB (3D Console Buttons inside fragment) ---
@@ -192,13 +193,13 @@ def run_game_engine():
         row_str = ""
         for col in range(1, 11):
             if row == st.session_state.obj_y and col == st.session_state.obj_x:
-                row_str += "👾 "  
+                row_str += "👾"  
             elif row == 9 and col == current_shield:
-                row_str += "🛡️ "  
+                row_str += "🛡️"  
             elif row == 9:
-                row_str += "═ "   
+                row_str += "═"   
             else:
-                row_str += "⚪ "  
+                row_str += "⚪"  
         matrix_output += row_str + "\n"
 
     st.code(matrix_output, language="text")
