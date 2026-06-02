@@ -15,10 +15,10 @@ st.markdown("""
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
         }
         
-        /* FIX: Scaling the matrix using viewport calculations to match any browser display size perfectly */
+        /* Scaling the matrix using viewport calculations to match any browser display size perfectly */
         .game-matrix-container {
             font-family: "Courier New", Courier, monospace !important;
-            font-size: min(5.5vw, 28px) !important; /* Dynamically resizes characters based on screen width */
+            font-size: min(5.5vw, 28px) !important; 
             line-height: 1.35 !important;
             letter-spacing: min(1vw, 5px) !important;
             color: #102a43 !important;
@@ -44,7 +44,7 @@ st.markdown("""
             border-radius: 14px !important;
             padding: 14px 20px !important;
             font-weight: 700 !important;
-            font-size: min(4.5vw, 1.1rem) !important; /* Readable font on mobile screens */
+            font-size: min(4.5vw, 1.1rem) !important; 
             box-shadow: 0 5px 0 #9fb3c8, 0 8px 12px rgba(0, 0, 0, 0.15) !important;
             transition: all 0.1s ease !important;
         }
@@ -69,7 +69,7 @@ st.markdown("""
 
         /* Large touch movement layout modifiers */
         .mobile-pad button {
-            padding: 22px 10px !important; /* Oversized buttons for easy thumb tapping */
+            padding: 22px 10px !important; 
             font-size: 1.4rem !important;
             background: linear-gradient(180deg, #243b53 0%, #102a43 100%) !important;
             color: #ffffff !important;
@@ -227,10 +227,7 @@ def run_game_engine():
             st.toast("💥 Perimeter Breached!", icon="❌")
             st.rerun()
 
-# --- JAVASCRIPT KEYBOARD LISTENER ---
-# FIX: Cleaned and securely closed multi-line text variables
-js_keyboard_listener = """
-<script>
-    const doc = window.parent.document;
-    doc.addEventListener('keydown', function(e) {
-        if (e.key === 'ArrowLeft') {
+# Run continuous rendering thread loop dynamically
+run_game_engine()
+
+# --- FIX: Injected as a clean, single-line string component to completely bypass triple-quote compile syntax crashes ---
