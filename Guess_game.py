@@ -1,89 +1,98 @@
 import random
 import streamlit as st
 
-# Set up page styling and tab title
-st.set_page_config(page_title="Number Guessing Game", page_icon="🎯", layout="centered")
+# Set up page layout and tab style
+st.set_page_config(page_title="Word Decryption Game", page_icon="🧩", layout="centered")
 
-# Initialize session state variables to store game data across browser refreshes
-if "secret_number" not in st.session_state:
-    st.session_state.secret_number = random.randint(1, 100)
+# Curated list of challenging 4-letter words
+WORD_BANK = [
+    "CODE", "JAVA", "BYTE", "DATA", "NODE", "FLUX", "ZINC", "PLUG",
+    "CYAN", "ECHO", "GIGA", "MAZE", "JINX", "WAVE", "VOID", "PIXEL"
+]
+
+# Initialize global game state data structures
+if "secret_word" not in st.session_state:
+    st.session_state.secret_word = random.choice(WORD_BANK)
     st.session_state.attempts = 0
-    st.session_state.max_attempts = 10
-    st.session_state.score = 100
+    st.session_state.max_attempts = 6
+    st.session_state.history = []  # Stores tuples of (guess, feedback_string)
     st.session_state.game_over = False
-    st.session_state.feedback = "Enter a number below and click Guess!"
-    st.session_state.feedback_type = "info" # info, success, warning, error
+    st.session_state.game_won = False
 
-def reset_game():
-    """Resets all backend variables for a brand new game round."""
-    st.session_state.secret_number = random.randint(1, 100)
+def restart_game():
+    """Wipes session memory clean to roll a new word."""
+    st.session_state.secret_word = random.choice(WORD_BANK)
     st.session_state.attempts = 0
-    st.session_state.score = 100
+    st.session_state.history = []
     st.session_state.game_over = False
-    st.session_state.feedback = "Game restarted! Good luck!"
-    st.session_state.feedback_type = "info"
+    st.session_state.game_won = False
 
-# Application Visual Layout Header
-st.title("🎯 Number Guessing Game")
-st.write("I'm thinking of a number between 1 and 100. Can you guess it?")
+# Application Interface Header Setup
+st.title("🧩 Mastermind Word Decryption")
+st.write("Crack the secret **4-letter word** before your attempts run out!")
 
-# Live Stats Dashboard Panel
+# Metric Feedback Panel Row
 col1, col2 = st.columns(2)
 with col1:
-    attempts_left = st.session_state.max_attempts - st.session_state.attempts
-    st.metric(label="Attempts Remaining", value=attempts_left)
+    st.metric("Attempts Remaining", st.session_state.max_attempts - st.session_state.attempts)
 with col2:
-    st.metric(label="Current Score", value=st.session_state.score)
+    st.metric("Target Length", "4 Letters")
 
-# Render Dynamic Alerts Framework
-if st.session_state.feedback_type == "success":
-    st.success(st.session_state.feedback)
-elif st.session_state.feedback_type == "warning":
-    st.warning(st.session_state.feedback)
-elif st.session_state.feedback_type == "error":
-    st.error(st.session_state.feedback)
-else:
-    st.info(st.session_state.feedback)
+# Display historical attempts dashboard tracking area
+if st.session_state.history:
+    st.write("### Your Guess History")
+    for past_guess, visual_blocks in st.session_state.history:
+        st.markdown(f"### `{past_guess}`  →  {visual_blocks}")
 
-# User Interactive Form Frame
-with st.form(key="guess_form", clear_on_submit=True):
-    user_guess = st.number_input(
-        "Enter your guess (1-100):", 
-        min_value=1, 
-        max_value=100, 
-        step=1,
-        disabled=st.session_state.game_over
-    )
-    submit_button = st.form_submit_button(label="Submit Guess", disabled=st.session_state.game_over)
-
-# Processing Logic Loop upon submission execution
-if submit_button and not st.session_state.game_over:
-    st.session_state.attempts += 1
-    
-    if user_guess == st.session_state.secret_number:
-        st.session_state.feedback = f"🎉 Correct! You won in {st.session_state.attempts} attempts! Final Score: {st.session_state.score}"
-        st.session_state.feedback_type = "success"
-        st.session_state.game_over = True
-        st.balloons() # Triggers celebration animation graphics
+# Win/Loss Resolution Banner Layout
+if st.session_state.game_over:
+    if st.session_state.game_won:
+        st.success(f"🎉 Code Cracked! You decrypted the word '{st.session_state.secret_word}' successfully!")
+        st.balloons()
     else:
-        st.session_state.score -= 10
-        if user_guess < st.session_state.secret_number:
-            st.session_state.feedback = f"📈 {user_guess} is too low! Try a higher number."
-            st.session_state.feedback_type = "warning"
-        else:
-            st.session_state.feedback = f"📉 {user_guess} is too high! Try a lower number."
-            st.session_state.feedback_type = "warning"
+        st.error(f"💀 System Locked! You ran out of attempts. The secret word was '{st.session_state.secret_word}'.")
 
-        if st.session_state.attempts >= st.session_state.max_attempts:
-            st.session_state.feedback = f"💀 Game Over! You ran out of attempts. The correct number was {st.session_state.secret_number}."
-            st.session_state.feedback_type = "error"
-            st.session_state.game_over = True
+# Interactive User Form Frame
+with st.form(key="word_form", clear_on_submit=True):
+    user_input = st.text_input(
+        "Type your 4-letter guess:", 
+        max_chars=4, 
+        disabled=st.session_state.game_over
+    ).upper().strip()
     
-    # Refresh the UI page view to load calculations instantly
-    st.rerun()
+    submit_btn = st.form_submit_button("Decrypt", disabled=st.session_state.game_over)
 
-# Global Options Layout Block
+# Processing validation loop pipelines
+if submit_btn and not st.session_state.game_over:
+    if len(user_input) != 4 or not user_input.isalpha():
+        st.warning("⚠️ Please enter a valid 4-letter alphabetic word!")
+    else:
+        st.session_state.attempts += 1
+        secret = st.session_state.secret_word
+        feedback_emojis = []
+
+        # Analyze letters dynamically to construct visual box string
+        for i in range(4):
+            if user_input[i] == secret[i]:
+                feedback_emojis.append("🟩")  # Perfect position Match
+            elif user_input[i] in secret:
+                feedback_emojis.append("🟨")  # Included elsewhere
+            else:
+                feedback_emojis.append("🟥")  # Miss entirely
+
+        feedback_string = " ".join(feedback_emojis)
+        st.session_state.history.append((user_input, feedback_string))
+
+        # Check win/loss flags
+        if user_input == secret:
+            st.session_state.game_over = True
+            st.session_state.game_won = True
+        elif st.session_state.attempts >= st.session_state.max_attempts:
+            st.session_state.game_over = True
+
+        st.rerun()
+
 st.write("---")
-if st.button("🔄 Restart Game", use_container_width=True):
-    reset_game()
+if st.button("🔄 Generate New Code Word", use_container_width=True):
+    restart_game()
     st.rerun()
