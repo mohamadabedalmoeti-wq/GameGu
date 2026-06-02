@@ -5,13 +5,18 @@ import streamlit as st
 # Setup dynamic responsive layout framework
 st.set_page_config(page_title="Reflex Reaction Game", page_icon="⚡", layout="centered")
 
-# Initialize real-time state engine parameters
+# FIX: Safely initialize ALL session state parameters at the very beginning
 if "score" not in st.session_state:
     st.session_state.score = 0
+if "high_score" not in st.session_state:
     st.session_state.high_score = 0
+if "speed" not in st.session_state:
     st.session_state.speed = 1.0  # Falling velocity step multiplier
+if "obj_y" not in st.session_state:
     st.session_state.obj_y = 0     # Falling item vertical position track
+if "obj_x" not in st.session_state:
     st.session_state.obj_x = random.randint(1, 10) # Horizontal lane position
+if "game_over" not in st.session_state:
     st.session_state.game_over = False
 
 def restart_arena():
