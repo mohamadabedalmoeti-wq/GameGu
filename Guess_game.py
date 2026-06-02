@@ -85,48 +85,19 @@ if "shield_x" not in st.session_state:
     st.session_state.shield_x = 5  
 if "game_state" not in st.session_state:
     st.session_state.game_state = "LOBBY"
-
-# State Machine Control Handlers
-def trigger_start():
-    st.session_state.game_state = "RUNNING"
-
-def trigger_pause():
-    st.session_state.game_state = "PAUSED"
-
-def trigger_stop():
-    st.session_state.game_state = "GAME_OVER"
-
-def trigger_restart():
-    if st.session_state.score > st.session_state.high_score:
-        st.session_state.high_score = st.session_state.score
-    st.session_state.score = 0
-    st.session_state.obj_y = 0
-    st.session_state.obj_x = random.randint(1, 10)
-    st.session_state.shield_x = 5
-    st.session_state.game_state = "RUNNING"
+if "loop_delay" not in st.session_state:
+    st.session_state.loop_delay = 0.30
 
 # Layout Header Block
 st.title("🎮 Reflex Catching Arena")
 st.write("<div style='text-align: center; color: #486581; font-weight: 500;'>Press your keyboard <b>⬅️ Left Arrow</b> and <b>➡️ Right Arrow</b> keys to play!</div>", unsafe_allow_html=True)
 st.write("---")
 
-# --- MASTER CONTROL HUB (3D Console Buttons) ---
-c1, c2, c3 = st.columns(3)
-with c1:
-    if st.session_state.game_state in ["LOBBY", "PAUSED"]:
-        st.button("▶️ Start Game", type="primary", use_container_width=True, on_click=trigger_start)
-    else:
-        st.button("⏸️ Pause", use_container_width=True, on_click=trigger_pause, disabled=(st.session_state.game_state == "GAME_OVER"))
-with c2:
-    st.button("⏹️ Stop", use_container_width=True, on_click=trigger_stop, disabled=(st.session_state.game_state in ["LOBBY", "GAME_OVER"]))
-with c3:
-    st.button("🔄 Reset", use_container_width=True, on_click=trigger_restart)
-
 # Dashboard speed slider configuration
-loop_delay = st.slider(
+st.session_state.loop_delay = st.slider(
     "⚙️ Adjust Game Loop Speed (Refresh Interval):",
-    min_value=0.05, max_value=1.00, value=0.30, step=0.05,
-    disabled=(st.session_state.game_state != "RUNNING")
+    min_value=0.05, max_value=1.00, value=st.session_state.loop_delay, step=0.05,
+    disabled=(st.session_state.game_state == "RUNNING") # Speed can only be changed before starting or while paused
 )
 
 # Score Monitors Dashboard Panel
@@ -168,30 +139,66 @@ js_keyboard_listener = """
 """
 components.html(js_keyboard_listener, height=0, width=0)
 
-# --- ISOLATED GRAPHICS VISUALIZATION LAYER ---
-@st.fragment(run_every=loop_delay)
+# --- ISOLATED CORE ENGINE CONTAINER ---
+# FIX: Wrapping everything inside the same refresh fragment stops button lag
+@st.fragment(run_every=st.session_state.loop_delay)
 def run_game_engine():
-    """Renders visual layout maps dynamically without locking browser input interfaces."""
-    if st.session_state.game_state != "RUNNING":
+    # --- MASTER CONTROL HUB (3D Console Buttons inside fragment) ---
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        if st.session_state.game_state in ["LOBBY", "PAUSED"]:
+            if st.button("▶️ Start Game", type="primary", use_container_width=True, key="frag_start"):
+                st.session_state.game_state = "RUNNING"
+                st.rerun()
+        else:
+            if st.button("⏸️ Pause", use_container_width=True, key="frag_pause"):
+                st.session_state.game_state = "PAUSED"
+                st.rerun()
+    with c2:
+        if st.button("⏹️ Stop", use_container_width=True, key="frag_stop", disabled=(st.session_state.game_state in ["LOBBY", "GAME_OVER"])):
+            st.session_state.game_state = "GAME_OVER"
+            st.rerun()
+    with c3:
+        if st.button("🔄 Reset", use_container_width=True, key="frag_reset"):
+            if st.session_state.score > st.session_state.high_score:
+                st.session_state.high_score = st.session_state.score
+            st.session_state.score = 0
+            st.session_state.obj_y = 0
+            st.session_state.obj_x = random.randint(1, 10)
+            st.session_state.shield_x = 5
+            st.session_state.game_state = "LOBBY"
+            st.rerun()
+
+    st.write("")
+
+    # --- STATE RENDERING LOGIC ---
+    if st.session_state.game_state == "LOBBY":
+        st.info("💡 Ready to play? Press the shiny blue '▶️ Start Game' button above to drop the threat matrix!")
+        return
+    elif st.session_state.game_state == "PAUSED":
+        st.warning("⏸️ Game engine frozen. Click '▶️ Start Game' to unpause and resume your session.")
+        return
+    elif st.session_state.game_state == "GAME_OVER":
+        st.error(f"💀 Game Over! The glitch breached your security layer. Final Score: {st.session_state.score}")
         return
 
-    # Increment object falling velocity coordinates
+    # --- RUNNING GAME ITERATION ---
     st.session_state.obj_y += 1
     current_shield = st.session_state.shield_x
     
-    # Construct the screen grid map utilizing clean light emojis
+    # Construct the screen grid map 
     matrix_output = ""
     for row in range(10):
         row_str = ""
         for col in range(1, 11):
             if row == st.session_state.obj_y and col == st.session_state.obj_x:
-                row_str += "👾 "  # Falling Target Danger Item
+                row_str += "👾 "  
             elif row == 9 and col == current_shield:
-                row_str += "🛡️ "  # User Shield Protection Platform
+                row_str += "🛡️ "  
             elif row == 9:
-                row_str += "▬ "   # Baseline floor tracking block
+                row_str += "═ "   
             else:
-                row_str += "⚪ "  # Clear bright minimalist grid bubbles
+                row_str += "⚪ "  
         matrix_output += row_str + "\n"
 
     st.code(matrix_output, language="text")
@@ -205,20 +212,11 @@ def run_game_engine():
             st.toast("🎯 Intercept Clean!", icon="⚡")
             st.rerun()
         else:
+            if st.session_state.score > st.session_state.high_score:
+                st.session_state.high_score = st.session_state.score
             st.session_state.game_state = "GAME_OVER"
             st.toast("💥 Perimeter Breached!", icon="❌")
             st.rerun()
 
-# --- CONSOLE STATE INTERFACES ---
-if st.session_state.game_state == "LOBBY":
-    st.info("💡 Ready to play? Press the shiny blue '▶️ Start Game' button above to drop the threat matrix!")
-elif st.session_state.game_state == "PAUSED":
-    st.warning("⏸️ Game engine frozen. Click '▶️ Start Game' to unpause and resume your session.")
-elif st.session_state.game_state == "GAME_OVER":
-    st.error(f"💀 Game Over! The glitch breached your security layer. Final Score: {st.session_state.score}")
-    if st.button("🚀 Re-Initialize Arena Systems (Play Again)", use_container_width=True):
-        trigger_restart()
-        st.rerun()
-else:
-    # Run continuous rendering thread loop dynamically
-    run_game_engine()
+# Run continuous rendering thread loop dynamically
+run_game_engine()
