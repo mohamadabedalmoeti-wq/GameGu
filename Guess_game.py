@@ -227,7 +227,8 @@ def run_game_engine():
             st.toast("💥 Perimeter Breached!", icon="❌")
             st.rerun()
 
-# --- JAVASCRIPT KEYBOARD LISTENER (Fallback support for laptop users) ---
+# --- JAVASCRIPT KEYBOARD LISTENER ---
+# FIX: Cleaned and securely closed multi-line text variables
 js_keyboard_listener = """
 <script>
     const doc = window.parent.document;
