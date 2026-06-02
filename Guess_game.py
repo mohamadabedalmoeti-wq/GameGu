@@ -2,16 +2,14 @@ import time
 import random
 import streamlit as st
 
-# Setup dynamic page framework
+# Setup page style framework
 st.set_page_config(page_title="Reflex Catching Arena", page_icon="⚡", layout="centered")
 
-# Initialize global tracking variables safely
+# Initialize persistent tracking variables safely
 if "score" not in st.session_state:
     st.session_state.score = 0
 if "high_score" not in st.session_state:
     st.session_state.high_score = 0
-if "speed" not in st.session_state:
-    st.session_state.speed = 1.0
 if "obj_y" not in st.session_state:
     st.session_state.obj_y = 0
 if "obj_x" not in st.session_state:
@@ -24,23 +22,37 @@ def restart_arena():
     if st.session_state.score > st.session_state.high_score:
         st.session_state.high_score = st.session_state.score
     st.session_state.score = 0
-    st.session_state.speed = 1.0
     st.session_state.obj_y = 0
     st.session_state.obj_x = random.randint(1, 10)
     st.session_state.game_over = False
 
-# Layout Header Layout
+# Layout Header
 st.title("⚡ Reflex Catching Arena")
 st.write("Slide your shield left and right to intercept the falling glitch object!")
 
-# Live Dashboard Layout Monitors
-m1, m2, m3 = st.columns(3)
+# Engine Speed Selector - Choose your starting pace
+speed_choice = st.radio(
+    "⚙️ Select Game Speed Pace:",
+    options=["🐢 Slow", "🎮 Normal", "🔥 Fast"],
+    index=1,
+    horizontal=True,
+    disabled=st.session_state.game_over
+)
+
+# Convert selector text to actual delay seconds
+if "Slow" in speed_choice:
+    loop_delay = 0.5   # 2 frames per second
+elif "Normal" in speed_choice:
+    loop_delay = 0.3 # 3.3 frames per second
+else:
+    loop_delay = 0.1   # 10 frames per second (Original hyper speed)
+
+# Live Score Dashboard Layout Monitors
+m1, m2 = st.columns(2)
 with m1:
     st.metric("Live Score", st.session_state.score)
 with m2:
     st.metric("Top High Score", st.session_state.high_score)
-with m3:
-    st.metric("Velocity Multiplier", f"{st.session_state.speed:.1f}x")
 
 st.write("---")
 
@@ -54,8 +66,8 @@ player_x = st.slider(
     disabled=st.session_state.game_over
 )
 
-# FIX: Isolate the visualization inside a self-contained automatic fragment engine loop
-@st.fragment(run_every=0.1)
+# Isolate the visualization inside a self-contained automatic fragment engine loop
+@st.fragment(run_every=loop_delay)
 def run_game_engine(shield_pos):
     """Executes background layout processing without getting frozen by slider changes."""
     if st.session_state.game_over:
@@ -64,16 +76,16 @@ def run_game_engine(shield_pos):
     # Advance falling motion downwards
     st.session_state.obj_y += 1
     
-    # Construct the graphic text frame layout view matrix
+    # Construct the graphic text frame layout view matrix (Increased row count to 10 for more reaction time)
     matrix_output = ""
-    for row in range(8):
+    for row in range(10):
         row_str = ""
         for col in range(1, 11):
             if row == st.session_state.obj_y and col == st.session_state.obj_x:
                 row_str += "👾 "  # Falling Glitch Target
-            elif row == 7 and col == shield_pos:
+            elif row == 9 and col == shield_pos:
                 row_str += "🛡️ "  # Live User Shield Position
-            elif row == 7:
+            elif row == 9:
                 row_str += "═ "   # Surface platform bound line
             else:
                 row_str += "░ "   # Void empty screen panels
@@ -82,12 +94,11 @@ def run_game_engine(shield_pos):
     # Print the calculated matrix directly on screen inside a clean code box container
     st.code(matrix_output, language="text")
 
-    # Game logic validation checks at the bottom drop point (Row 7)
-    if st.session_state.obj_y >= 7:
+    # Game logic validation checks at the bottom drop point (Row 9)
+    if st.session_state.obj_y >= 9:
         if st.session_state.obj_x == shield_pos:
             # Catch Success Route
             st.session_state.score += 1
-            st.session_state.speed += 0.2
             st.session_state.obj_y = 0
             st.session_state.obj_x = random.randint(1, 10)
             st.toast("🎯 Intercept Clean!", icon="⚡")
